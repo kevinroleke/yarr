@@ -157,11 +157,11 @@ func main() {
 	// err = ResetDb()
 	// HandleErr(err)
 
-	// err = UpdateRss("https://feeds.fireside.fm/bibleinayear/rss")
-	// HandleErr(err)
+	err = UpdateRss("https://feeds.fireside.fm/bibleinayear/rss")
+	HandleErr(err)
 
-	// err = UpdateRss("https://rss.art19.com/apology-line")
-	// HandleErr(err)
+	err = UpdateRss("https://rss.art19.com/apology-line")
+	HandleErr(err)
 
 	err = UpdateRss("https://access.acast.com/rss/5fc7c9db52d6971d13f1e77f/kzzzle7i")
 	HandleErr(err)

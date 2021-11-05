@@ -6,6 +6,7 @@ import (
 	"context"
 	"strings"
 	"strconv"
+	"errors"
 	"crypto/sha1"
 	"html/template"
 
@@ -124,12 +125,23 @@ func UpdateRss(rssLink string) error {
 			pubDate = time.Now()
 		}
 
+		if len(item.Enclosures) == 0 {
+			return errors.New("no content")
+		}
+
+		var image string
+		if item.Image == nil {
+			image = feed.Image.URL
+		} else {
+			image = item.Image.URL
+		}
+
 		episode := Episode{
 			Title: item.Title,
 			Description: template.HTML(Ps.Sanitize(item.Description)),
 			Media: item.Enclosures[0].URL,
 			MediaType: item.Enclosures[0].Type,
-			Thumbnail: item.Image.URL,
+			Thumbnail: image,
 			Id: eid,
 			Published: pubDate,
 			PodId: id,
