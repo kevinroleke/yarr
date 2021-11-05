@@ -142,6 +142,22 @@ func webServer() {
         mainTmpl.Execute(w, data)
 	})
 
+	r.HandleFunc("/search/pods/{keywords}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		keywords := vars["keywords"]
+
+		pods, err := SearchPods(keywords)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		data := MainPage{
+            Pods: pods,
+        }
+        mainTmpl.Execute(w, data)
+	})
+
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
 	fmt.Println("Listening on :8080")
