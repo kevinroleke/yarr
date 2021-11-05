@@ -19,7 +19,8 @@ var (
 	Ps *bluemonday.Policy
 	siteKey string = os.Getenv("HCAPTCHA_SITE_KEY")
 	secretKey string = os.Getenv("HCAPTCHA_SECRET_KEY")
-	adminKey string = os.Getenv("ADMIN_KEY") 
+	adminKey string = os.Getenv("ADMIN_KEY")
+	errmsg string = "there was an error D:"
 )
 
 type Episode struct {
@@ -57,6 +58,7 @@ type MainPage struct {
 type PodPage struct {
 	Episodes []Episode
 	Podcast Pod
+	SiteKey string
 }
 
 type EpisodePage struct {
@@ -137,6 +139,7 @@ func webServer() {
 		_, ok := hcaptcha.Get(r)
 		if !ok {
 			fmt.Fprintf(w, "you failed da captcha")
+			return
 		}
 
 		r.ParseForm()
@@ -144,11 +147,40 @@ func webServer() {
 
 		err := UpdateRss(rssLink)
 		if err != nil {
-			fmt.Fprintf(w, "there was an error D:")
+			fmt.Fprintf(w, errmsg)
+			fmt.Println(err)
 			return
 		}
 
 		fmt.Fprintf(w, "submitted successfully")
+	}))
+
+	r.HandleFunc("/pods/{id}/refresh", hclient.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		_, ok := hcaptcha.Get(r)
+		if !ok {
+			fmt.Fprintf(w, "you failed da captcha")
+			return
+		}
+
+		// get rss
+		pod, err := GetPod(id)
+		if err != nil {
+			fmt.Fprintf(w, errmsg)
+			fmt.Println(err)
+			return
+		}
+
+		err = UpdateRss(pod.Rss)
+		if err != nil {
+			fmt.Fprintf(w, errmsg)
+			fmt.Println(err)
+			return
+		}
+
+		http.Redirect(w, r, "/pods/" + id, http.StatusTemporaryRedirect)
 	}))
 
 	episodeTmpl := template.Must(template.ParseFiles("templates/episode.html"))
@@ -159,6 +191,7 @@ func webServer() {
 
 		episode, err := GetEpisode(id)
 		if err != nil {
+			fmt.Fprintf(w, errmsg)
 			fmt.Println(err)
 			return
 		}
@@ -169,6 +202,7 @@ func webServer() {
 
 		err = episodeTmpl.Execute(w, data)
 		if err != nil {
+			fmt.Fprintf(w, errmsg)
 			fmt.Println(err)
 			return
 		}
@@ -182,12 +216,14 @@ func webServer() {
 
 		episodes, err := GetAllEpisodes(id)
 		if err != nil {
+			fmt.Fprintf(w, errmsg)
 			fmt.Println(err)
 			return
 		}
 
 		pod, err := GetPod(id)
 		if err != nil {
+			fmt.Fprintf(w, errmsg)
 			fmt.Println(err)
 			return
 		}
@@ -195,10 +231,12 @@ func webServer() {
 		data := PodPage{
             Episodes: episodes,
 			Podcast: pod,
+			SiteKey: siteKey,
         }
 
 		err = podTmpl.Execute(w, data)
 		if err != nil {
+			fmt.Fprintf(w, errmsg)
 			fmt.Println(err)
 			return
 		}
@@ -211,12 +249,14 @@ func webServer() {
 
 		episodes, err := SearchEpisodes(podId, keywords)
 		if err != nil {
+			fmt.Fprintf(w, errmsg)
 			fmt.Println(err)
 			return
 		}
 
 		pod, err := GetPod(podId)
 		if err != nil {
+			fmt.Fprintf(w, errmsg)
 			fmt.Println(err)
 			return
 		}
@@ -228,6 +268,7 @@ func webServer() {
 
 		err = podTmpl.Execute(w, data)
 		if err != nil {
+			fmt.Fprintf(w, errmsg)
 			fmt.Println(err)
 			return
 		}
@@ -244,6 +285,7 @@ func webServer() {
 
 		pods, err := TopPods(15, adminView)
 		if err != nil {
+			fmt.Fprintf(w, errmsg)
 			fmt.Println(err)
 			return
 		}
@@ -253,7 +295,12 @@ func webServer() {
 			Admin: adminView,
 			AdminKey: admin,
         }
-        mainTmpl.Execute(w, data)
+        err = mainTmpl.Execute(w, data)
+		if err != nil {
+			fmt.Fprintf(w, errmsg)
+			fmt.Println(err)
+			return
+		}
 	})
 
 	r.HandleFunc("/search/pods/{keywords}", func(w http.ResponseWriter, r *http.Request) {
@@ -262,6 +309,7 @@ func webServer() {
 
 		pods, err := SearchPods(keywords)
 		if err != nil {
+			fmt.Fprintf(w, errmsg)
 			fmt.Println(err)
 			return
 		}
@@ -269,7 +317,12 @@ func webServer() {
 		data := MainPage{
             Pods: pods,
         }
-        mainTmpl.Execute(w, data)
+        err = mainTmpl.Execute(w, data)
+		if err != nil {
+			fmt.Fprintf(w, errmsg)
+			fmt.Println(err)
+			return
+		}
 	})
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
@@ -293,8 +346,10 @@ func main() {
 	// err = UpdateRss("https://rss.art19.com/apology-line")
 	// HandleErr(err)
 
-	err = UpdateRss("https://access.acast.com/rss/5fc7c9db52d6971d13f1e77f/kzzzle7i")
-	HandleErr(err)
+	// err = UpdateRss("https://access.acast.com/rss/5fc7c9db52d6971d13f1e77f/kzzzle7i")
+	// HandleErr(err)
+
+	go EveryHour(UpdateAll)
 
 	webServer()
 }

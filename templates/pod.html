@@ -3,6 +3,7 @@
     <head>
         <title>YARR</title>
         <link rel="stylesheet" href="/static/main.css">
+        <script src="https://hcaptcha.com/1/api.js" async defer></script>
     </head>
     <body>
         <div class="wrap">
@@ -22,11 +23,15 @@
                         <a href="{{.Link}}">SUPPORT THE CREATOR</a>
                     </div>
                     <img src="{{.AlbumArt}}" class="cardart">
+                    <br><br><div class="ep-search">
+                        <input id="ep-search" type="text" placeholder="Search Episodes">
+                        <img id="ep-search-btn" src="/static/search.png">
+                    </div><br>
+                    <form action="/pods/{{.Id}}/refresh" method="POST">
+                        <br><div class="h-captcha" data-sitekey="{{ $.SiteKey }}"></div>
+                        <br><input type="submit" value="Scan for new episodes">
+                    </form><br>
                 {{end}}
-                <br><br><div class="ep-search">
-                    <input id="ep-search" type="text" placeholder="Search Episodes">
-                    <img id="ep-search-btn" src="/static/search.png">
-                </div><br>
             </div>
             <div class="grid-container">
                 {{range .Episodes}}

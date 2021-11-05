@@ -86,12 +86,29 @@ func UpdateRss(rssLink string) error {
 		return err
 	}
 
+	if feed == nil {
+		return errors.New("Feed is nil")
+	}
+
+	var pImage string
+	var author string
+	if feed.Image == nil {
+		pImage = "/static/logo.jpeg"
+	} else {
+		pImage = feed.Image.URL
+	}
+	if feed.Author == nil {
+		author = "Unknown"
+	} else {
+		author = feed.Author.Name
+	}
+
 	if !exists {
 		pod := Pod{
 			Title: feed.Title,
 			Description: template.HTML(Ps.Sanitize(feed.Description)),
-			AlbumArt: feed.Image.URL,
-			Creator: feed.Author.Name,
+			AlbumArt: pImage,
+			Creator: author,
 			Categories: feed.Categories,
 			Rss: rssLink,
 			Id: id,
@@ -116,7 +133,7 @@ func UpdateRss(rssLink string) error {
 			}
 		}
 
-		if stop {
+		if stop || item == nil {
 			continue
 		}
 
@@ -131,7 +148,7 @@ func UpdateRss(rssLink string) error {
 
 		var image string
 		if item.Image == nil {
-			image = feed.Image.URL
+			image = pImage
 		} else {
 			image = item.Image.URL
 		}
@@ -146,7 +163,7 @@ func UpdateRss(rssLink string) error {
 			Published: pubDate,
 			PodId: id,
 		}
-		fmt.Println(episode)
+		fmt.Printf("[*] Added episode `%s`\n", episode.Title)
 		AddEpisode(episode)
 	}
 

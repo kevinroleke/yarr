@@ -86,8 +86,25 @@ func SearchEpisodes(podId string, keywords string) ([]Episode, error) {
 	return GetEpisodes(rows)
 }
 
+func GetAllApprovedPods() ([]Pod, error) {
+	stmt, err := Db.Prepare("select * from podcasts where approved=1 order by added")
+
+	if err != nil {
+		return []Pod{}, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return []Pod{}, err
+	}
+
+	return GetPods(rows)
+}
+
 func GetAllEpisodes(podId string) ([]Episode, error) {
-	stmt, err := Db.Prepare("select * from episodes where podId=?")
+	stmt, err := Db.Prepare("select * from episodes where podId=? order by published desc")
 
 	if err != nil {
 		return []Episode{}, err
