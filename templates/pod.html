@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="/static/main.css">
+    </head>
+    <body>
+        <div class="wrap">
+            <div class="header">
+                <h1 class="logo"><a href="/">YARR<img src="/static/logo.jpeg"></a></h1>
+                <div class="search">
+                    <input type="text" placeholder="Search">
+                    <img id="search-btn" src="/static/search.png">
+                </div>
+            </div>
+            <div class="card">
+                {{with .Podcast}}
+                    <div class="cardtxt">
+                        <h1 class="titled">{{.Title}}</h1>
+                        <p class="description">{{.Description}}</p>
+                        <p class="creator"><b>By </b>{{.Creator}}</p><br>
+                        <a href="{{.Link}}">SUPPORT THE CREATOR</a>
+                    </div>
+                    <img src="{{.AlbumArt}}" class="cardart">
+                {{end}}
+            </div>
+            <div class="grid-container">
+                {{range .Episodes}}
+                    <div class="episode">
+                        <a href="/episode/{{.Id}}" class="whr">
+                            <img src="{{.Thumbnail}}" class="albumart">
+                            <h1 class="title">{{.Title}}</h1>
+                            <p class="description"></p>
+                            <template>
+                                {{.Description}}
+                            </template>
+                            <p class="creator"><b>@ {{.Published}}</b></p>
+                        </a>
+                    </div>
+                {{end}}
+                <br><br>
+            </div>
+        </div>
+
+        <script src="/static/template.js"></script>
+    </body>
+</html>

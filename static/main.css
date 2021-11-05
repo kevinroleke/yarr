@@ -1,0 +1,142 @@
+@font-face {
+    font-family: 'Roboto';
+    src: url('roboto.ttf');
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(5, 300px);
+    grid-gap: 50px;
+    padding: 10px;
+    width: 98%;
+
+    justify-content: center;
+}
+
+.wrap {
+    margin: 0;
+    padding: 0;
+
+    font-family: Roboto;
+}
+
+body, html {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.albumart {
+    width: 95%;
+    height: auto;
+}
+
+.cardart {
+    /* float: left; */
+    /* height: 100px; */
+
+    /* width: 11%; */
+    /* height: auto; */
+    display: inline-block;
+    max-width: 11%;
+}
+
+.cardtxt {
+    /* float: left; */
+
+    /* width: 85%; */
+    display: inline-block;
+    max-width: 88%;
+}
+
+.cardtxt p {
+    overflow: hidden;
+}
+
+.episode {
+    width: 300px;
+    padding-left: 2.5%;
+    padding-top: 2.5%;
+
+    box-shadow: 1px 1px 3px #000;
+}
+
+.episode:hover {
+    box-shadow: 1px 1px 7px #000;
+}
+
+.title {
+    margin: 0;
+    height: 4em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3; 
+    -webkit-box-orient: vertical;
+}
+
+.description {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3; 
+    -webkit-box-orient: vertical;
+}
+
+.creator {
+    margin: 0;
+    margin-top: 10px;
+}
+
+.whr {
+    color: #000;
+    text-decoration: none;
+}
+
+.header {
+    height: 50px;
+}
+
+.logo {
+    float: left;
+    font-size: 35px;
+    margin-left: 15px;
+}
+
+.logo a {
+    color: black;
+    text-decoration: none;
+}
+
+.logo img {
+    height: 1em;
+    width: auto;
+    margin-left: 4px;
+}
+
+.search {
+    position: absolute;
+    float: right;
+    right: 10px;
+    top: 25px;
+}
+
+input {
+    font-family: Roboto;
+    width: 300px;
+}
+
+.card {
+    /* width: 40%; */
+    padding: 1%;
+    margin: 2.5%;
+    box-shadow: 1px 1px 3px #000;
+}
+
+.card:hover {
+    box-shadow: 1px 1px 7px #000;
+}

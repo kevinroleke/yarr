@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="/static/main.css">
+    </head>
+    <body>
+        <div class="wrap">
+            <div class="header">
+                <h1 class="logo"><a href="/">YARR<img src="/static/logo.jpeg"></a></h1>
+                <div class="search">
+                    <input type="text" placeholder="Search">
+                    <img id="search-btn" src="/static/search.png">
+                </div>
+            </div>
+            {{with .Epi}}
+                <div class="card">
+                    <div class="cardtxt">
+                        <h1 class="titled">{{.Title}}</h1>
+                        <p class="description">{{.Description}}</p>
+                        <p class="published"><b>@ {{.Published}}</b></p><br>
+                    </div>
+                    <img src="{{.Thumbnail}}" class="cardart">
+                </div>
+                <div class="card">
+                    <audio controls>
+                        <source src="{{.Media}}" type="{{.MediaType}}">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+            {{end}}
+            <br><br>
+        </div>
+    </body>
+</html>

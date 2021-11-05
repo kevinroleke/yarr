@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="/static/main.css">
+    </head>
+    <body>
+        <div class="wrap">
+            <div class="header">
+                <h1 class="logo"><a href="/">YARR<img src="/static/logo.jpeg"></a></h1>
+                <div class="search">
+                    <input type="text" placeholder="Search">
+                    <img id="search-btn" src="/static/search.png">
+                </div>
+            </div>
+            <div class="grid-container">
+                {{range .Pods}}
+                    <div class="episode">
+                        <a href="/pods/{{.Id}}" class="whr">
+                            <img src="{{.AlbumArt}}" class="albumart">
+                            <h1 class="title">{{.Title}}</h1>
+                            <p class="description"></p>
+                            <template>
+                                {{.Description}}
+                            </template>
+                            <p class="creator"><b>By</b> {{.Creator}}</p>
+                        </a>
+                    </div>
+                {{end}}
+                <br><br>
+            </div>
+        </div>
+
+        <script src="/static/template.js"></script>
+    </body>
+</html>
