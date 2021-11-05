@@ -1,0 +1,17 @@
+<html>
+    <head>
+        <title>YARR</title>
+        <script src="https://hcaptcha.com/1/api.js" async defer></script>
+        <link rel="stylesheet" href="/static/main.css">
+    </head>
+    <body>
+        <div class="wrap">
+            <form action="/add/podcast" method="POST">
+                <p>Submit a podcast for approval.</p>
+                <input type="text" name="rssLink" placeholder="RSS Feed Link">
+                <br><div class="h-captcha" data-sitekey="{{ .SiteKey }}"></div>
+                <br><input type="submit" value="Submit">
+            </form>
+        </div>
+    </body>
+</html>

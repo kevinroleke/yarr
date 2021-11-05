@@ -23,7 +23,7 @@ func ResetDb() error {
 		"drop trigger if exists episodes_fts_insert",
 		"drop trigger if exists episodes_fts_update",
 		"drop trigger if exists episodes_fts_delete",
-		"create table podcasts (id text not null primary key, title text, description text, albumart text, creator text, categories text, rss text, added datetime, link text);",
+		"create table podcasts (id text not null primary key, title text, description text, albumart text, creator text, categories text, rss text, added datetime, link text, approved bool);",
 		"create table episodes (id text not null primary key, podId text, title text, description text, thumbnail text, media text, mediaType text, published datetime);",
 		"create virtual table podcasts_fts using fts5 (title, description, content=podcasts);",
 		"create virtual table episodes_fts using fts5 (title, description, content=episodes);",
@@ -165,8 +165,14 @@ func GetEpisodes(rows *sql.Rows) ([]Episode, error) {
 	return episodes, nil
 }
 
-func TopPods(num int) ([]Pod, error) {
-	stmt, err := Db.Prepare("select * from podcasts order by added desc limit ?")
+func TopPods(num int, admin bool) ([]Pod, error) {
+	var stmt *sql.Stmt
+	var err error
+	if !admin {
+		stmt, err = Db.Prepare("select * from podcasts where approved=1 order by added desc limit ?")
+	} else {
+		stmt, err = Db.Prepare("select * from podcasts order by added desc limit ?")
+	}
 
 	if err != nil {
 		return []Pod{}, err
@@ -219,10 +225,15 @@ func GetPods(rows *sql.Rows) ([]Pod, error) {
 		var rss string
 		var link string 
 		var added time.Time
+		var approved bool
 
-		err := rows.Scan(&id, &title, &description, &albumart, &creator, &cats, &rss, &added, &link)
+		err := rows.Scan(&id, &title, &description, &albumart, &creator, &cats, &rss, &added, &link, &approved)
 		if err != nil {
 			return []Pod{}, err
+		}
+
+		if !approved {
+			fmt.Println("Unapproved")
 		}
 
 		categories = strings.Split(cats, ",")
@@ -251,7 +262,7 @@ func GetPods(rows *sql.Rows) ([]Pod, error) {
 }
 
 func SearchPods(keywords string) ([]Pod, error) {
-	stmt, err := Db.Prepare("select * from podcasts where rowid in (select rowid from podcasts_fts where podcasts_fts match ? order by rank)")
+	stmt, err := Db.Prepare("select * from podcasts where rowid in (select rowid from podcasts_fts where podcasts_fts match ? order by rank) and approved=1")
 
 	if err != nil {
 		return []Pod{}, err
@@ -273,7 +284,7 @@ func AddPod(pod Pod) error {
 		return err
 	}
 
-	stmt, err := tx.Prepare("insert into podcasts(id, title, description, albumart, creator, categories, rss, added, link) values(?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := tx.Prepare("insert into podcasts(id, title, description, albumart, creator, categories, rss, added, link, approved) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -281,7 +292,51 @@ func AddPod(pod Pod) error {
 	cat := strings.Join(pod.Categories, ",")
 
 	defer stmt.Close()
-	_, err = stmt.Exec(pod.Id, pod.Title, pod.Description, pod.AlbumArt, pod.Creator, cat, pod.Rss, pod.Added, pod.Link)
+	_, err = stmt.Exec(pod.Id, pod.Title, pod.Description, pod.AlbumArt, pod.Creator, cat, pod.Rss, pod.Added, pod.Link, false)
+	if err != nil {
+		return err
+	}
+	
+	tx.Commit()
+
+	return nil
+}
+
+func ApprovePod(id string) error {
+	tx, err := Db.Begin()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare("update podcasts set approved=1 where id=?")
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+	_, err = stmt.Exec(id)
+	if err != nil {
+		return err
+	}
+	
+	tx.Commit()
+
+	return nil
+}
+
+func DeletePod(id string) error {
+	tx, err := Db.Begin()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare("delete from podcasts where id=?")
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+	_, err = stmt.Exec(id)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <title>YARR</title>
         <link rel="stylesheet" href="/static/main.css">
     </head>
     <body>
@@ -8,6 +9,7 @@
             <div class="header">
                 <h1 class="logo"><a href="/">YARR<img src="/static/logo.jpeg"></a></h1>
                 <div class="search">
+                    <a class="add" href="/add/">ADD PODCAST</a>
                     <input id="pod-search" type="text" placeholder="Search">
                     <img id="pod-search-btn" src="/static/search.png">
                 </div>
@@ -23,6 +25,11 @@
                                 {{.Description}}
                             </template>
                             <p class="creator"><b>By</b> {{.Creator}}</p>
+                            {{if $.Admin}}
+                                <br>
+                                <a href="/admin/approve/{{.Id}}/?admin={{$.AdminKey}}" class="approve">APPROVE</a>
+                                <a href="/admin/delete/{{.Id}}/?admin={{$.AdminKey}}" class="delete">DELETE</a>
+                            {{end}}
                         </a>
                     </div>
                 {{end}}

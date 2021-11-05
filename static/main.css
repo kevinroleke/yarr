@@ -112,6 +112,12 @@ body, html {
     text-decoration: none;
 }
 
+.add {
+    font-size: 15px;
+    color: black;
+    text-decoration: underline;
+}
+
 .logo img {
     height: 1em;
     width: auto;
@@ -143,4 +149,12 @@ input {
 
 .card:hover {
     box-shadow: 1px 1px 7px #000;
+}
+
+.delete {
+    color: red;
+}
+
+.approve {
+    color: rgb(65, 219, 78);
 }

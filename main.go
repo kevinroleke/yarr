@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"fmt"
 	"time"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"database/sql"
 
 	"github.com/gorilla/mux"
+	"github.com/kataras/hcaptcha"
 	"github.com/microcosm-cc/bluemonday"
 )
 
@@ -15,6 +17,9 @@ var (
 	dbFile string = "yarr.db"
 	Db *sql.DB
 	Ps *bluemonday.Policy
+	siteKey string = os.Getenv("HCAPTCHA_SITE_KEY")
+	secretKey string = os.Getenv("HCAPTCHA_SECRET_KEY")
+	adminKey string = os.Getenv("ADMIN_KEY") 
 )
 
 type Episode struct {
@@ -45,6 +50,8 @@ type Pod struct {
 
 type MainPage struct {
     Pods []Pod
+	Admin bool
+	AdminKey string
 }
 
 type PodPage struct {
@@ -54,6 +61,10 @@ type PodPage struct {
 
 type EpisodePage struct {
 	Epi Episode
+}
+
+type AddPage struct {
+	SiteKey string
 }
 
 func HandleErr(err error) {
@@ -73,6 +84,72 @@ func InitBm() {
 
 func webServer() {
 	r := mux.NewRouter()
+
+	hclient := hcaptcha.New(secretKey)
+	addTmpl := template.Must(template.ParseFiles("templates/add.html"))
+
+	r.HandleFunc("/add/", func(w http.ResponseWriter, r *http.Request) {
+		data := AddPage{
+            SiteKey: siteKey,
+        }
+        addTmpl.Execute(w, data)
+	})
+
+	r.HandleFunc("/admin/approve/{id}/", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		admin := r.URL.Query().Get("admin")
+		if admin != adminKey {
+			fmt.Fprintf(w, "u r not authenticated whomp")
+			return
+		}
+
+		err := ApprovePod(id)
+		if err != nil {
+			fmt.Fprintf(w, "FAILED TO APPROVE %s", id)
+			return
+		}
+
+		fmt.Fprintf(w, "APPROVED %s", id)
+	})
+
+	r.HandleFunc("/admin/delete/{id}/", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		admin := r.URL.Query().Get("admin")
+		if admin != adminKey {
+			fmt.Fprintf(w, "u r not authenticated whomp")
+			return
+		}
+
+		err := DeletePod(id)
+		if err != nil {
+			fmt.Fprintf(w, "FAILED TO DELETE %s", id)
+			return
+		}
+
+		fmt.Fprintf(w, "DELETED %s", id)
+	})
+
+	r.HandleFunc("/add/podcast", hclient.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, ok := hcaptcha.Get(r)
+		if !ok {
+			fmt.Fprintf(w, "you failed da captcha")
+		}
+
+		r.ParseForm()
+		rssLink := r.FormValue("rssLink")
+
+		err := UpdateRss(rssLink)
+		if err != nil {
+			fmt.Fprintf(w, "there was an error D:")
+			return
+		}
+
+		fmt.Fprintf(w, "submitted successfully")
+	}))
 
 	episodeTmpl := template.Must(template.ParseFiles("templates/episode.html"))
 
@@ -159,7 +236,13 @@ func webServer() {
 	mainTmpl := template.Must(template.ParseFiles("templates/main.html"))
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		pods, err := TopPods(15)
+		admin := r.URL.Query().Get("admin")
+		adminView := false
+		if admin == adminKey {
+			adminView = true
+		}
+
+		pods, err := TopPods(15, adminView)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -167,6 +250,8 @@ func webServer() {
 
 		data := MainPage{
             Pods: pods,
+			Admin: adminView,
+			AdminKey: admin,
         }
         mainTmpl.Execute(w, data)
 	})
@@ -199,8 +284,8 @@ func main() {
 
 	InitBm()
 
-	err = ResetDb()
-	HandleErr(err)
+	// err = ResetDb()
+	// HandleErr(err)
 
 	// err = UpdateRss("https://feeds.fireside.fm/bibleinayear/rss")
 	// HandleErr(err)
