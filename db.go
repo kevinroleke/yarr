@@ -15,6 +15,8 @@ func ResetDb() error {
 	statements := []string{
 		"drop table if exists podcasts;",
 		"drop table if exists episodes;",
+		"drop table if exists podcasts_fts;",
+		"drop table if exists episodes_fts;",
 		"create table podcasts (id text not null primary key, title text, description text, albumart text, creator text, categories text, rss text, added datetime, link text);",
 		"create table episodes (id text not null primary key, podId text, title text, description text, thumbnail text, media text, mediaType text, published datetime);",
 		"create virtual table podcasts_fts using fts5 (title, description, content=podcasts);",
