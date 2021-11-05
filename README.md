@@ -2,7 +2,7 @@
 
 A website for storing, sharing and viewing podcasts in RSS format. 
 
-Powers https://yarr.ps
+Powering [yarr.ps](https://yarr.ps)
 
 ## Building
 
