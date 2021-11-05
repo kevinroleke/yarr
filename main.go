@@ -127,6 +127,35 @@ func webServer() {
 		}
 	})
 
+	r.HandleFunc("/search/episodes/{podId}/{keywords}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		podId := vars["podId"]
+		keywords := vars["keywords"]
+
+		episodes, err := SearchEpisodes(podId, keywords)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		pod, err := GetPod(podId)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		data := PodPage{
+            Episodes: episodes,
+			Podcast: pod,
+        }
+
+		err = podTmpl.Execute(w, data)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	})
+
 	mainTmpl := template.Must(template.ParseFiles("templates/main.html"))
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

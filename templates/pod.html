@@ -22,6 +22,10 @@
                     </div>
                     <img src="{{.AlbumArt}}" class="cardart">
                 {{end}}
+                <br><br><div class="ep-search">
+                    <input id="ep-search" type="text" placeholder="Search Episodes">
+                    <img id="ep-search-btn" src="/static/search.png">
+                </div><br>
             </div>
             <div class="grid-container">
                 {{range .Episodes}}
@@ -41,6 +45,11 @@
             </div>
         </div>
 
+        {{with .Podcast}}
+            <script>
+                window.PODID = '{{.Id}}';
+            </script>
+        {{end}}
         <script src="/static/template.js"></script>
     </body>
 </html>

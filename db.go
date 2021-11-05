@@ -17,6 +17,12 @@ func ResetDb() error {
 		"drop table if exists episodes;",
 		"drop table if exists podcasts_fts;",
 		"drop table if exists episodes_fts;",
+		"drop trigger if exists podcasts_fts_insert",
+		"drop trigger if exists podcasts_fts_update",
+		"drop trigger if exists podcasts_fts_delete",
+		"drop trigger if exists episodes_fts_insert",
+		"drop trigger if exists episodes_fts_update",
+		"drop trigger if exists episodes_fts_delete",
 		"create table podcasts (id text not null primary key, title text, description text, albumart text, creator text, categories text, rss text, added datetime, link text);",
 		"create table episodes (id text not null primary key, podId text, title text, description text, thumbnail text, media text, mediaType text, published datetime);",
 		"create virtual table podcasts_fts using fts5 (title, description, content=podcasts);",
@@ -32,6 +38,18 @@ func ResetDb() error {
 		BEGIN
 			INSERT INTO podcasts_fts (podcasts_fts, rowid, title, description) VALUES ('delete', old.rowid, old.title, old.description);
 			INSERT INTO podcasts_fts (rowid, title, description) VALUES (new.rowid, new.title, new.description);
+		END;`,
+		`CREATE TRIGGER episodes_fts_insert AFTER INSERT ON episodes BEGIN 
+			INSERT INTO episodes_fts (rowid, title, description) VALUES (new.rowid, new.title, new.description); 
+		END;`,
+		`CREATE TRIGGER episodes_fts_delete AFTER DELETE ON episodes
+		BEGIN
+			INSERT INTO episodes_fts (episodes_fts, rowid, title, description) VALUES ('delete', old.rowid, old.title, old.description);
+		END;`,
+		`CREATE TRIGGER episodes_fts_update AFTER UPDATE ON episodes
+		BEGIN
+			INSERT INTO episodes_fts (episodes_fts, rowid, title, description) VALUES ('delete', old.rowid, old.title, old.description);
+			INSERT INTO episodes_fts (rowid, title, description) VALUES (new.rowid, new.title, new.description);
 		END;`,
 	}
 
@@ -52,7 +70,20 @@ func InitDb() error {
 }
 
 func SearchEpisodes(podId string, keywords string) ([]Episode, error) {
-	return []Episode{}, nil
+	stmt, err := Db.Prepare("select * from episodes where rowid in (select rowid from episodes_fts where episodes_fts match ? order by rank) and podId=?")
+
+	if err != nil {
+		return []Episode{}, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(keywords, podId)
+	if err != nil {
+		return []Episode{}, err
+	}
+
+	return GetEpisodes(rows)
 }
 
 func GetAllEpisodes(podId string) ([]Episode, error) {
@@ -220,7 +251,6 @@ func GetPods(rows *sql.Rows) ([]Pod, error) {
 }
 
 func SearchPods(keywords string) ([]Pod, error) {
-	// SELECT * FROM posts WHERE ROWID IN (SELECT ROWID FROM posts_fts WHERE posts_fts MATCH 'fry' ORDER BY rank);
 	stmt, err := Db.Prepare("select * from podcasts where rowid in (select rowid from podcasts_fts where podcasts_fts match ? order by rank)")
 
 	if err != nil {

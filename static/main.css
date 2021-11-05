@@ -125,6 +125,10 @@ body, html {
     top: 25px;
 }
 
+.ep-search {
+    float: left;
+}
+
 input {
     font-family: Roboto;
     width: 300px;
