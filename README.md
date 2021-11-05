@@ -11,6 +11,8 @@ Powers https://yarr.ps
 ## TODO
 
 - Add ability to add pods with hcaptcha
+- Add automatic refreshing of feeds
+- Add ability to refresh feed with hcaptcha
 
 ## Confusion
 
