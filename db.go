@@ -17,6 +17,20 @@ func ResetDb() error {
 		"drop table if exists episodes;",
 		"create table podcasts (id text not null primary key, title text, description text, albumart text, creator text, categories text, rss text, added datetime, link text);",
 		"create table episodes (id text not null primary key, podId text, title text, description text, thumbnail text, media text, mediaType text, published datetime);",
+		"create virtual table podcasts_fts using fts5 (title, description, content=podcasts);",
+		"create virtual table episodes_fts using fts5 (title, description, content=episodes);",
+		`CREATE TRIGGER podcasts_fts_insert AFTER INSERT ON podcasts BEGIN 
+			INSERT INTO podcasts_fts (rowid, title, description) VALUES (new.rowid, new.title, new.description); 
+		END;`,
+		`CREATE TRIGGER podcasts_fts_delete AFTER DELETE ON podcasts
+		BEGIN
+			INSERT INTO podcasts_fts (podcasts_fts, rowid, title, description) VALUES ('delete', old.rowid, old.title, old.description);
+		END;`,
+		`CREATE TRIGGER podcasts_fts_update AFTER UPDATE ON podcasts
+		BEGIN
+			INSERT INTO podcasts_fts (podcasts_fts, rowid, title, description) VALUES ('delete', old.rowid, old.title, old.description);
+			INSERT INTO podcasts_fts (rowid, title, description) VALUES (new.rowid, new.title, new.description);
+		END;`,
 	}
 
 	for _, stmt := range statements {
@@ -204,7 +218,21 @@ func GetPods(rows *sql.Rows) ([]Pod, error) {
 }
 
 func SearchPods(keywords string) ([]Pod, error) {
-	return []Pod{}, nil
+	// SELECT * FROM posts WHERE ROWID IN (SELECT ROWID FROM posts_fts WHERE posts_fts MATCH 'fry' ORDER BY rank);
+	stmt, err := Db.Prepare("select * from podcasts where rowid in (select rowid from podcasts_fts where podcasts_fts match ? order by rank)")
+
+	if err != nil {
+		return []Pod{}, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(keywords)
+	if err != nil {
+		return []Pod{}, err
+	}
+
+	return GetPods(rows)
 }
 
 func AddPod(pod Pod) error {
